@@ -1,14 +1,17 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 
-export default class CreateCrud extends Component {
+export default class EditCrud extends Component {
+
     constructor(props) {
         super(props);
 
         this.onChangeCrudDescription = this.onChangeCrudDescription.bind(this);
         this.onChangeCrudResponsible = this.onChangeCrudResponsible.bind(this);
         this.onChangeCrudPriority = this.onChangeCrudPriority.bind(this);
+        this.onChangeCrudCompleted = this.onChangeCrudCompleted.bind(this);
         this.onSubmit = this.onSubmit.bind(this);
+        this.delete = this.delete.bind(this);
 
         this.state = {
             crud_description: '',
@@ -17,6 +20,22 @@ export default class CreateCrud extends Component {
             crud_completed: false
         }
     }
+
+    componentDidMount() {
+        axios.get('http://localhost:4000/crud/'+this.props.match.params.id)
+            .then(response => {
+                this.setState({
+                    crud_description: response.data.crud_description,
+                    crud_responsible: response.data.crud_responsible,
+                    crud_priority: response.data.crud_priority,
+                    crud_completed: response.data.crud_completed
+                })   
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+    }
+
     onChangeCrudDescription(e) {
         this.setState({
             crud_description: e.target.value
@@ -34,36 +53,40 @@ export default class CreateCrud extends Component {
             crud_priority: e.target.value
         });
     }
+
+    onChangeCrudCompleted(e) {
+        this.setState({
+            crud_completed: !this.state.crud_completed
+        });
+    }
+
     onSubmit(e) {
         e.preventDefault();
-        
-        console.log(`Form submitted:`);
-        console.log(`CRUD Description: ${this.state.crud_description}`);
-        console.log(`CRUD Responsible: ${this.state.crud_responsible}`);
-        console.log(`CRUD Priority: ${this.state.crud_priority}`);
-        
-        const newCrud = {
+        const obj = {
             crud_description: this.state.crud_description,
             crud_responsible: this.state.crud_responsible,
             crud_priority: this.state.crud_priority,
             crud_completed: this.state.crud_completed
         };
-
-        axios.post('http://localhost:4000/crud/add', newCrud)
-            .then(res => console.log(res.data));
-
-            this.props.history.push('/');
-        this.setState({
-            crud_description: '',
-            crud_responsible: '',
-            crud_priority: '',
-            crud_completed: false
-        })
+        console.log(obj);
+        axios.post('http://localhost:4000/crud/update/'+this.props.match.params.id, obj)
+        .then(res => console.log(res.data));
+        
+        this.props.history.push('/');
     }
+    delete(e) {
+        e.preventDefault();
+        axios.post('http://localhost:4000/crud/delete/'+this.props.match.params.id)
+            .then(console.log('Deleted'))
+            .catch(err => console.log(err))
+            
+        this.props.history.push('/');
+    }
+
     render() {
         return (
-            <div style={{marginTop: 10}}>
-                <h3>Create New</h3>
+            <div>
+                <h3 align="center">Update Crud</h3>
                 <form onSubmit={this.onSubmit}>
                     <div className="form-group"> 
                         <label>Description: </label>
@@ -117,10 +140,28 @@ export default class CreateCrud extends Component {
                             <label className="form-check-label">High</label>
                         </div>
                     </div>
+                    <div className="form-check">
+                        <input  className="form-check-input"
+                                id="completedCheckbox"
+                                type="checkbox"
+                                name="completedCheckbox"
+                                onChange={this.onChangeCrudCompleted}
+                                checked={this.state.crud_completed}
+                                value={this.state.crud_completed}
+                                />
+                        <label className="form-check-label" htmlFor="completedCheckbox">
+                            Completed
+                        </label>                        
+                    </div>
+
+                    <br />
 
                     <div className="form-group">
-                        <input type="submit" value="Create Crud" className="btn btn-primary" />
+                        <input type="submit" value="Update Crud" className="btn btn-primary" />
                     </div>
+                    <input type="button" onClick={this.delete} className="btn btn-danger" value="Delete"  />  
+                    {/* <button onClick={this.delete} className="btn btn-danger">Delete</button> */}
+        
                 </form>
             </div>
         )
